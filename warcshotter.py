@@ -16,7 +16,7 @@ def main():
     targeturl = argv[1]
     filename = "%s-%s.warc" % (urlparse(targeturl).netloc, 
                                datetime.utcnow().strftime("%Y%m%d-%H%M"))
-    f = warc.open(filename, "w")
+    wf = warc.open(filename, "w")
 
     req = urlopen(targeturl)
     resp = req.read()
@@ -25,9 +25,9 @@ def main():
     headers = {"WARC-Type": "response",
                "WARC-IP-Address": gethostbyname(urlparse(req.geturl()).netloc)}
     record = warc.WARCRecord(payload=payload, headers=headers)
-    f.write_record(record)
+    wf.write_record(record)
 
-    f.close()
+    wf.close()
 
 if __name__ == "__main__":
     main()
