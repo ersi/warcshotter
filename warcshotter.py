@@ -4,9 +4,8 @@
 # Write a warcinfo record
 # Open a connection to target site / Fetch the original designated resource
 # If the resource is HTML, parse the resource for further direct linked resources - like image srcs, script srcs, link/anchor hrefs,
-#
 
-import warc, urllib2
+import warc
 from urllib2 import urlopen
 from sys import argv
 from datetime import datetime
@@ -24,8 +23,11 @@ def main():
 
     payload = str(req.info()) + '\r\n' + resp
     headers = {"WARC-Type": "response",
-               "WARC-IP-Address": gethostbyname(urlparse.(req.geturl()).netloc)}
+               "WARC-IP-Address": gethostbyname(urlparse(req.geturl()).netloc)}
     record = warc.WARCRecord(payload=payload, headers=headers)
     f.write_record(record)
 
     f.close()
+
+if __name__ == "__main__":
+    main()
