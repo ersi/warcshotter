@@ -1,0 +1,1 @@
+## WARCShotter - Archivefriendly website snapshotting
