@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 
 # Open a new file  
 # Write a warcinfo record
@@ -6,11 +6,27 @@
 # If the resource is HTML, parse the resource for further direct linked resources - like image srcs, script srcs, link/anchor hrefs,
 
 import warc
-from urllib2 import urlopen
+from urllib2 import urlopen, HTTPHandler, build_opener
+from httplib import HTTPConnection
 from sys import argv
 from datetime import datetime
 from urlparse import urlparse
 from socket import gethostbyname
+
+requests = [] #FIXME: Don't rely on global list
+
+# With help from http://stackoverflow.com/questions/603856/how-do-you-get-default-headers-in-a-urllib2-request
+class MyHTTPConnection(HTTPConnection):
+    def send(self, s):
+        #FIXME: Don't rely on global list
+        #FIXME: Add WARC-TARGET-URI to headers
+        requests.append(warc.WARCRecord(payload=s,
+                                        headers={"WARC-Type": "request"}))
+        HTTPConnection.send(self, s)
+
+class MyHTTPHandler(HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(MyHTTPConnection, req)
 
 def main():
     targeturl = argv[1]
@@ -18,8 +34,12 @@ def main():
                                datetime.utcnow().strftime("%Y%m%d-%H%M"))
     wf = warc.open(filename, "w")
 
-    req = urlopen(targeturl)
+    opener = build_opener(MyHTTPHandler)
+    req = opener.open(targeturl)
     resp = req.read()
+
+    if len(requests):
+        wf.write_record(requests.pop(0))
 
     payload = str(req.info()) + '\r\n' + resp
     headers = {"WARC-Type": "response",
