@@ -1,20 +1,14 @@
 #!/usr/bin/python
 
-# Open a new file  
-# Write a warcinfo record
-# Open a connection to target site / Fetch the original designated resource
-# If the resource is HTML, parse the resource for further direct linked resources - like image srcs, script srcs, link/anchor hrefs,
-
 import warc
-from hashlib import sha1
-from urllib2 import urlopen, HTTPHandler, build_opener
+from urllib2 import HTTPHandler, build_opener
 from httplib import HTTPConnection
 from sys import argv
 from datetime import datetime
 from urlparse import urlparse
 from socket import gethostbyname
 
-requests = [] #FIXME: Don't rely on global list
+REQUESTS = [] #FIXME: Don't rely on global list
 
 # With help from http://stackoverflow.com/questions/603856/how-do-you-get-default-headers-in-a-urllib2-request
 class MyHTTPConnection(HTTPConnection):
@@ -39,8 +33,8 @@ def main():
     req = opener.open(targeturl)
     resp = req.read()
 
-    if len(requests):
-        wf.write_record(requests.pop(0))
+    if len(REQUESTS):
+        wf.write_record(REQUESTS.pop(0))
 
     if req.getcode() == "200":
         resp_status = "HTTP/1.1 200 OK" #FIXME: How do we know it's http/1.1?
