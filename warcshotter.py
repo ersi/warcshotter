@@ -6,6 +6,7 @@
 # If the resource is HTML, parse the resource for further direct linked resources - like image srcs, script srcs, link/anchor hrefs,
 
 import warc
+from hashlib import sha1
 from urllib2 import urlopen, HTTPHandler, build_opener
 from httplib import HTTPConnection
 from sys import argv
@@ -41,9 +42,14 @@ def main():
     if len(requests):
         wf.write_record(requests.pop(0))
 
-    payload = str(req.info()) + '\r\n' + resp
+    if req.getcode() == "200":
+        resp_status = "HTTP/1.1 200 OK" #FIXME: How do we know it's http/1.1?
+    else:
+        resp_status = "HTTP/1.1 %s" % req.getcode() #FIXME:No desc after code
+    payload = resp_status + str(req.info()) + '\r\n' + resp
     headers = {"WARC-Type": "response",
-               "WARC-IP-Address": gethostbyname(urlparse(req.geturl()).netloc)}
+               "WARC-IP-Address": gethostbyname(urlparse(req.geturl()).netloc),
+               "WARC-Target-URI": req.geturl()}
     record = warc.WARCRecord(payload=payload, headers=headers)
     wf.write_record(record)
 
