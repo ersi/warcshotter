@@ -15,7 +15,7 @@ class MyHTTPConnection(HTTPConnection):
     def send(self, s):
         #FIXME: Don't rely on global list
         #FIXME: Add WARC-TARGET-URI to headers
-        requests.append(warc.WARCRecord(payload=s,
+        REQUESTS.append(warc.WARCRecord(payload=s,
                                         headers={"WARC-Type": "request"}))
         HTTPConnection.send(self, s)
 
@@ -37,9 +37,9 @@ def main():
         wf.write_record(REQUESTS.pop(0))
 
     if req.getcode() == "200":
-        resp_status = "HTTP/1.1 200 OK" #FIXME: How do we know it's http/1.1?
+        resp_status = "HTTP/1.1 200 OK\r\n" #FIXME: How do we know it's http/1.1?
     else:
-        resp_status = "HTTP/1.1 %s" % req.getcode() #FIXME:No desc after code
+        resp_status = "HTTP/1.1 %s\r\n" % req.getcode() #FIXME:No desc after code
     payload = resp_status + str(req.info()) + '\r\n' + resp
     headers = {"WARC-Type": "response",
                "WARC-IP-Address": gethostbyname(urlparse(req.geturl()).netloc),
