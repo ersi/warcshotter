@@ -9,14 +9,14 @@ from urlparse import urlparse, urljoin
 from socket import gethostbyname
 from HTMLParser import HTMLParser 
 
-REQUESTS = [] #FIXME: Don't rely on global list
+#FIXME: Don't rely on globals
+REQUESTS = []
 TARGETS = []
-DEBUG = True 
+DEBUG = True
+
 # With help from http://stackoverflow.com/questions/603856/how-do-you-get-default-headers-in-a-urllib2-request
 class MyHTTPConnection(HTTPConnection):
     def send(self, s):
-        #FIXME: Don't rely on global list
-        #FIXME: Add WARC-TARGET-URI to headers
         REQUESTS.append(warc.WARCRecord(payload=s,
                                         headers={"WARC-Type": "request"}))
         HTTPConnection.send(self, s)
@@ -85,7 +85,9 @@ def download(url):
 def create_warcinfo(filename):
     headers = {"WARC-Type": "warcinfo",
                "WARC-Filename": filename}
-    payload = "software: Warcshotter\r\nformat: WARC File Format 1.0\r\nconformsTo: http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
+    payload = "software: Warcshotter\r\n
+               format: WARC File Format 1.0\r\n
+               conformsTo: http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
     record = warc.WARCRecord(payload=payload, headers=headers)
     return record
 
