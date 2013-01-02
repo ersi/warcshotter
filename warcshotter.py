@@ -11,13 +11,13 @@ from HTMLParser import HTMLParser
 
 REQUESTS = [] #FIXME: Don't rely on global list
 TARGETS = []
-
+DEBUG = True 
 # With help from http://stackoverflow.com/questions/603856/how-do-you-get-default-headers-in-a-urllib2-request
 class MyHTTPConnection(HTTPConnection):
     def send(self, s):
         #FIXME: Don't rely on global list
         #FIXME: Add WARC-TARGET-URI to headers
-        requests.append(warc.WARCRecord(payload=s,
+        REQUESTS.append(warc.WARCRecord(payload=s,
                                         headers={"WARC-Type": "request"}))
         HTTPConnection.send(self, s)
 
@@ -55,51 +55,54 @@ class MyHTMLParser(HTMLParser):
                 else:
                     pass
 
+def download(url):
+    if DEBUG:
+        print "Trying to download %s..." % url
+    opener = build_opener(MyHTTPHandler)
+    request = opener.open(url)
+    response = request.read()
+
+    if request.getcode() == "200":
+        resp_status = "HTTP/1.1 200 OK\r\n" #FIXME: How do we know it's http/1.1?
+    else:
+        resp_status = "HTTP/1.1 %s OK\r\n" % request.getcode()
+    payload = resp_status + str(request.info()) + '\r\n' + response
+    headers = {"WARC-Type": "response",
+               "WARC-IP-Address": gethostbyname(urlparse(request.geturl()).netloc),
+               "WARC-Target-URI": request.geturl()}
+    record = warc.WARCRecord(payload=payload, headers=headers)
+
+    if len(TARGETS) == 0:
+        if DEBUG:
+            print "TARGETS was empty.. so trying to parse..."
+        parser = MyHTMLParser()
+        parser.feed(response)
+        if DEBUG:
+            print "TARGETS: %r" % TARGETS
+
+    return record
+
 def main():
+    if DEBUG:
+        print "Starting..."
     targeturl = argv[1]
     filename = "%s-%s.warc" % (urlparse(targeturl).netloc, 
                                datetime.utcnow().strftime("%Y%m%d-%H%M"))
     wf = warc.open(filename, "w")
 
-    opener = build_opener(MyHTTPHandler)
-    req = opener.open(targeturl)
-    resp = req.read()
-
     if len(REQUESTS):
         wf.write_record(REQUESTS.pop(0))
 
-    if req.getcode() == "200":
-        resp_status = "HTTP/1.1 200 OK" #FIXME: How do we know it's http/1.1?
-    else:
-        resp_status = "HTTP/1.1 %s OK\r\n" % req.getcode() #FIXME:No desc after code
-    payload = resp_status + str(req.info()) + '\r\n' + resp
-    headers = {"WARC-Type": "response",
-               "WARC-IP-Address": gethostbyname(urlparse(req.geturl()).netloc),
-               "WARC-Target-URI": req.geturl()}
-    record = warc.WARCRecord(payload=payload, headers=headers)
-    wf.write_record(record)
+    wf.write_record(download(targeturl))
 
-    parser = MyHTMLParser()
-    parser.feed(resp)
-
+    if DEBUG:
+        print "Downloading linked content..."
     for target in TARGETS:
-        req = opener.open(target)
-        resp = req.read()
-
         if len(REQUESTS):
             wf.write_record(REQUESTS.pop(0))
-
-        if req.getcode() == "200":
-            resp_status = "HTTP/1.1 200 OK\r\n" #FIXME: How do we know it's http/1.1?
-        else:
-            resp_status = "HTTP/1.1 %s OK\r\n" % req.getcode() #FIXME:No desc after code
-        payload = resp_status + str(req.info()) + '\r\n' + resp
-        headers = {"WARC-Type": "response",
-                   "WARC-IP-Address": gethostbyname(urlparse(req.geturl()).netloc),
-                   "WARC-Target-URI": req.geturl()}
-        record = warc.WARCRecord(payload=payload, headers=headers)
-        wf.write_record(record)
-    print "TARGETS ", TARGETS
+        wf.write_record(download(target))
+    if DEBUG:
+        print "TARGETS ", TARGETS
     wf.close()
 
 if __name__ == "__main__":
