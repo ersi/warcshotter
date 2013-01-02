@@ -82,6 +82,13 @@ def download(url):
 
     return record
 
+def create_warcinfo(filename):
+    headers = {"WARC-Type": "warcinfo",
+               "WARC-Filename": filename}
+    payload = "software: Warcshotter\r\nformat: WARC File Format 1.0\r\nconformsTo: http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
+    record = warc.WARCRecord(payload=payload, headers=headers)
+    return record
+
 def main():
     if DEBUG:
         print "Starting..."
@@ -90,17 +97,33 @@ def main():
                                datetime.utcnow().strftime("%Y%m%d-%H%M"))
     wf = warc.open(filename, "w")
 
+    warcinfo_record = create_warcinfo(filename)
+    print "Writing warcinfo record"
+    wf.write_record(warcinfo_record)
+
+    record = download(targeturl)
     if len(REQUESTS):
+        print "Writing request record."
         wf.write_record(REQUESTS.pop(0))
-
-    wf.write_record(download(targeturl))
-
+        print "Writing response record"
+        wf.write_record(record)
+    else:
+        print "Writing response record"
+        wf.write_record(record)
     if DEBUG:
         print "Downloading linked content..."
     for target in TARGETS:
+        record = download(target)
+
         if len(REQUESTS):
+            print "Writing request record"
             wf.write_record(REQUESTS.pop(0))
-        wf.write_record(download(target))
+            print "Writing response record"
+            wf.write_record(record)
+        else:
+            record = download(target)
+            "Writing response record."
+            wf.write_record(record)
     if DEBUG:
         print "TARGETS ", TARGETS
     wf.close()
