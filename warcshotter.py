@@ -118,6 +118,7 @@ def main():
         if DEBUG:
             print "Writing request record"
         wf.write_record(REQUESTS.pop(0))
+        if DEBUG:
             print "Writing response record"
         wf.write_record(record)
     else:
