@@ -102,10 +102,10 @@ def mkwarcinfo(filename):
     return record
 
 def main():
-    print "Starting..."
     targeturl = argv[1]
     filename = "%s-%s.warc" % (urlparse(targeturl).netloc, 
                                datetime.utcnow().strftime("%Y%m%d-%H%M"))
+    print "Starting snapshot of %s, writing to %s" % (targeturl, filename)
     wf = warc.open(filename, "w")
 
     warcinfo_record = mkwarcinfo(filename)
