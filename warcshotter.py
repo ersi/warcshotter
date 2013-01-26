@@ -44,14 +44,20 @@ class MyHTMLParser(HTMLParser):
             for attr in attrs:
                 if "href" in attr[0]:
                     url = unicode(urljoin(argv[1], attr[1]))
-                    TARGETS.append(url)
+                    if url not in TARGETS:
+                        TARGETS.append(url)
+                    else:
+                        pass
                 else:
                     pass
         elif tag in ["img", "script"]:
             for attr in attrs:
                 if "src" in attr[0]:
                     url = unicode(urljoin(argv[1], attr[1]))
-                    TARGETS.append(url)
+                    if url not in TARGETS:
+                        TARGETS.append(url)
+                    else:
+                        pass
                 else:
                     pass
 
