@@ -69,7 +69,7 @@ def download(url):
     if DEBUG:
         print "Trying to download %s" % url
     if urlparse(url).scheme == "https":
-        opener = build_opener(MyHTTPHandler)
+        opener = build_opener(MyHTTPSHandler)
     else:
         opener = build_opener(MyHTTPHandler)
     request = opener.open(url)
