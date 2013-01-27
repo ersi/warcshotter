@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import warc
-from urllib2 import HTTPHandler, HTTPSHandler, build_opener
+from urllib2 import HTTPHandler, HTTPSHandler, HTTPError, build_opener
 from httplib import HTTPConnection, HTTPSConnection
 from sys import argv
 from datetime import datetime
@@ -72,25 +72,25 @@ def download(url):
         opener = build_opener(MyHTTPSHandler)
     else:
         opener = build_opener(MyHTTPHandler)
-    request = opener.open(url)
-    response = request.read()
+    try:
+        request = opener.open(url)
+        response = request.read()
+    except HTTPError, error:
+        request = error
+        response = request.read()
 
-    if request.getcode() == "200":
-        resp_status = "HTTP/1.1 200 OK\r\n" #FIXME: How do we know it's http/1.1?
-    else:
-        resp_status = "HTTP/1.1 %s OK\r\n" % request.getcode()
+    resp_status = "HTTP/1.1 %s %s\r\n" % (request.getcode(), request.msg)
     payload = resp_status + str(request.info()) + '\r\n' + response
     headers = {"WARC-Type": "response",
                "WARC-IP-Address": gethostbyname(urlparse(request.geturl()).netloc),
                "WARC-Target-URI": request.geturl()}
     record = warc.WARCRecord(payload=payload, headers=headers)
 
-    #TODO: Check that url is HTML
     if len(TARGETS) == 0:
         if DEBUG:
             print "TARGETS was empty.. so trying to parse"
         try:
-            parsehtml(response)
+            parsehtml(response) #TODO: Check that url is HTML
         except HTMLParseError, e:
             pass
         if DEBUG:
