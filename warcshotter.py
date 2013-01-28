@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import warc
-from urllib2 import HTTPHandler, HTTPSHandler, HTTPError, build_opener
+from urllib2 import HTTPHandler, HTTPSHandler, HTTPRedirectHandler, HTTPError, build_opener
 from httplib import HTTPConnection, HTTPSConnection
 from sys import argv
 from datetime import datetime
@@ -32,6 +32,17 @@ class MyHTTPSConnection(HTTPSConnection):
 class MyHTTPSHandler(HTTPSHandler):
     def https_open(self, req):
         return self.do_open(MyHTTPSConnection, req)
+
+class MyHTTPRedirectHandler(HTTPRedirectHandler):
+    def http_error_302(self, req, fp, code, msg, headers):
+        if DEBUG:
+            resp_status = "HTTP/1.1 %s %s\r\n" % (fp.getcode(), fp.msg)
+            print resp_status + str(fp.info())
+            print fp.read(), "\n"
+
+        return HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
+
+    http_error_301 = http_error_303 = http_error_307 = http_error_302
 
 class MyHTMLParser(HTMLParser):
     def handle_starttag(self,tag, attrs):
@@ -69,7 +80,7 @@ def download(url):
     if urlparse(url).scheme == "https":
         opener = build_opener(MyHTTPSHandler)
     else:
-        opener = build_opener(MyHTTPHandler)
+        opener = build_opener(MyHTTPHandler, MyHTTPRedirectHandler)
     try:
         request = opener.open(url)
         response = request.read()
