@@ -9,12 +9,10 @@ from urlparse import urlparse, urljoin
 from socket import gethostbyname
 from HTMLParser import HTMLParser, HTMLParseError
 
-#FIXME: Don't rely on globals
 REQUESTS = []
 TARGETS = []
 DEBUG = True
 
-# With help from http://stackoverflow.com/questions/603856/how-do-you-get-default-headers-in-a-urllib2-request
 class MyHTTPConnection(HTTPConnection):
     def send(self, s):
         REQUESTS.append(warc.WARCRecord(payload=s,
@@ -90,7 +88,7 @@ def download(url):
         if DEBUG:
             print "TARGETS was empty.. so trying to parse"
         try:
-            parsehtml(response) #TODO: Check that url is HTML
+            parsehtml(response)
         except HTMLParseError, e:
             pass
         if DEBUG:
