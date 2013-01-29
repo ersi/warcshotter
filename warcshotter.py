@@ -35,11 +35,16 @@ class MyHTTPSHandler(HTTPSHandler):
 
 class MyHTTPRedirectHandler(HTTPRedirectHandler):
     def http_error_302(self, req, fp, code, msg, headers):
+        resp_status = "HTTP/1.1 %s %s\r\n" % (fp.getcode(), fp.msg)
+        payload = resp_status + str(fp.info()) + '\r\n' + fp.read()
+        headers = {"WARC-Type": "response",
+                   "WARC-IP-Address": gethostbyname(urlparse(fp.geturl()).netloc),
+                   "WARC-Target-URI": fp.geturl()}
         if DEBUG:
-            resp_status = "HTTP/1.1 %s %s\r\n" % (fp.getcode(), fp.msg)
-            print resp_status + str(fp.info())
-            print fp.read(), "\n"
+            print payload
+            print headers
 
+        REQUESTS.append(warc.WARCRecord(payload=payload, headers=headers))
         return HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
 
     http_error_301 = http_error_303 = http_error_307 = http_error_302
@@ -134,7 +139,7 @@ def main():
             print "Writing request record"
         wf.write_record(REQUESTS.pop(0))
         if DEBUG:
-            print "Writing response record"
+            print "Writing response record %s" % record['WARC-Record-ID']
         wf.write_record(record)
     else:
         if DEBUG:
