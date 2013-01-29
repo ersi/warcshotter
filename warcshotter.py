@@ -119,11 +119,12 @@ def main():
 
     record = download(targeturl)
     if len(REQUESTS):
+        request_record = REQUESTS.pop(0)
         if DEBUG:
-            print "Writing request record"
-        wf.write_record(REQUESTS.pop(0))
+            print "Writing request record %s" % request_record['WARC-Record-ID']
+        wf.write_record(request_record)
         if DEBUG:
-            print "Writing response record"
+            print "Writing response record %s" % record['WARC-Record-ID']
         wf.write_record(record)
     else:
         if DEBUG:
@@ -138,11 +139,12 @@ def main():
         record = download(target)
 
         if len(REQUESTS):
+            request_record = REQUESTS.pop(0)
             if DEBUG:
-                print "Writing request record"
-            wf.write_record(REQUESTS.pop(0))
+                print "Writing request record %s" % request_record['WARC-Record-ID']
+            wf.write_record(request_record)
             if DEBUG:
-                print "Writing response record"
+                print "Writing response record %s" % record['WARC-Record-ID']
             wf.write_record(record)
         else:
             record = download(target)
