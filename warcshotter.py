@@ -13,15 +13,18 @@ REQUESTS = []
 TARGETS = []
 DEBUG = True
 
+
 class MyHTTPConnection(HTTPConnection):
     def send(self, s):
         REQUESTS.append(warc.WARCRecord(payload=s,
                                         headers={"WARC-Type": "request"}))
         HTTPConnection.send(self, s)
 
+
 class MyHTTPHandler(HTTPHandler):
     def http_open(self, req):
         return self.do_open(MyHTTPConnection, req)
+
 
 class MyHTTPSConnection(HTTPSConnection):
     def send(self, s):
@@ -29,12 +32,14 @@ class MyHTTPSConnection(HTTPSConnection):
                                         headers={"WARC-Type": "request"}))
         HTTPSConnection.send(self, s)
 
+
 class MyHTTPSHandler(HTTPSHandler):
     def https_open(self, req):
         return self.do_open(MyHTTPSConnection, req)
 
+
 class MyHTMLParser(HTMLParser):
-    def handle_starttag(self,tag, attrs):
+    def handle_starttag(self, tag, attrs):
         if DEBUG:
             if tag in ["link", "img", "script", "iframe", "embed"]:
                 print "%s - %r" % (tag, attrs)
@@ -59,9 +64,11 @@ class MyHTMLParser(HTMLParser):
                 else:
                     pass
 
+
 def parsehtml(htmlresponse):
     htmlparser = MyHTMLParser()
     htmlparser.feed(htmlresponse)
+
 
 def download(url):
     if DEBUG:
@@ -96,18 +103,20 @@ def download(url):
 
     return record
 
+
 def mkwarcinfo(filename):
     headers = {"WARC-Type": "warcinfo",
                "WARC-Filename": filename}
     payload = ("software: Warcshotter\r\nformat: WARC File Format 1.0\r\n"
-    "conformsTo: http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_"
-    "latestdraft.pdf")
+               "conformsTo: http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_"
+               "latestdraft.pdf")
     record = warc.WARCRecord(payload=payload, headers=headers)
     return record
 
+
 def main():
     targeturl = argv[1]
-    filename = "%s-%s.warc" % (urlparse(targeturl).netloc, 
+    filename = "%s-%s.warc" % (urlparse(targeturl).netloc,
                                datetime.utcnow().strftime("%Y%m%d-%H%M"))
     print "Starting snapshot of %s, writing to %s" % (targeturl, filename)
     wf = warc.open(filename, "w")
@@ -131,8 +140,8 @@ def main():
             print "Writing response record"
         wf.write_record(record)
 
-    #If the parser could parse the first resource, continue to download found
-    #resources. Doesn't parse again, currently. Only grabbin images, css etc
+    # If the parser could parse the first resource, continue to download found
+    # resources. Doesn't parse again, currently. Only grabbin images, css etc
     if DEBUG:
         print "Downloading linked content"
     for target in TARGETS:
